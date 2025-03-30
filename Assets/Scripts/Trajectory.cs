@@ -87,7 +87,7 @@ public class Trajectory : MonoBehaviour
             int i = 0;
             foreach (var position in positions)
             {
-                lineRenderer.SetPosition(i, new Vector3(position.x, position.y, -5));
+                lineRenderer.SetPosition(i, new Vector3(position.x, position.y, -1));
                 i++;
             }
         }
@@ -125,8 +125,9 @@ public class Trajectory : MonoBehaviour
         
         float jumpImpulse = 10.0f;      // Vertical speed boost (jump strength)
         bool jumped = false;     // Duration of the jump effect (can be small)
+        int maxIterations = 1000; // Prevent infinite loops
 
-        while (positions[positions.Count-1].y > 0f)
+        while (positions.Count < maxIterations && positions[positions.Count-1].y > 0f)
         {
             if (x > _timerPressed && vy <= 0 && !jumped && _isPressed)  // When the object hits the threshold and is falling
             {
@@ -137,8 +138,16 @@ public class Trajectory : MonoBehaviour
             
             float newX = x + vx * dt;
             float newY = y + vy * dt;
+            
+            // Validate numbers (crucial!)
+            if (float.IsNaN(newX) || float.IsInfinity(newX) || 
+                float.IsNaN(newY) || float.IsInfinity(newY))
+            {
+                break;
+            }
             x = newX;
             y = newY;
+            
             if (y < 0) break;
             positions.Add(new Position(newX, newY));
             vx += -_f2 * vx * dt;

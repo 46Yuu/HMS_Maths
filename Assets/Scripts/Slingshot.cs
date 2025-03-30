@@ -47,25 +47,22 @@ public class Slingshot : MonoBehaviour
             SetStrips(currentPosition);
             if (bird != null)
             {
+                Trajectory trajectory = bird.GetComponent<Trajectory>();
                 bird.GetComponent<Rigidbody2D>().isKinematic = true;
-                Vector3 launchDirection = (center.position - currentPosition).normalized;
                 float launchForce = Vector3.Distance(currentPosition, center.position) * 2f;
                 float angle = CalculateAngle(center.position, currentPosition);
                 birdTrajectory.alpha = angle;
                 birdTrajectory.l1 = launchForce;
                 
-                //bird.GetComponent<Trajectory>().RemoveTrajectory();
-                float rad = bird.GetComponent<Trajectory>().DegreeToRadian(birdTrajectory.alpha);
-                bird.GetComponent<Trajectory>().positions = 
-                    bird.GetComponent<Trajectory>().LancerOiseauFrottementRecurrence(rad, birdTrajectory.l1);
-                bird.GetComponent<Trajectory>().DrawTrajectory();
+                float rad = trajectory.DegreeToRadian(birdTrajectory.alpha);
+                trajectory.positions = trajectory.LancerOiseauFrottementRecurrence(rad, birdTrajectory.l1);
+                trajectory.DrawTrajectory();
             }
-
-            
         }
         else
         {
-            ResetStrips();
+            if(!bird.GetComponent<BirdMovement>().isShooted)
+                ResetStrips();
         }
     }
 
@@ -74,8 +71,6 @@ public class Slingshot : MonoBehaviour
         bird = Instantiate(birdPrefab, stripPositions[0].position, Quaternion.identity);
         bird.GetComponent<CircleCollider2D>().enabled = false;
         birdTrajectory = bird.GetComponent<Trajectory>();
-        /*Vector2 launchDirection = ConvertToVector2(birdTrajectory.alpha , birdTrajectory.l1);
-        bird.GetComponent<Rigidbody2D>().AddForce(launchDirection, ForceMode2D.Impulse);*/
     }
 
     private void OnMouseDown()
@@ -89,17 +84,18 @@ public class Slingshot : MonoBehaviour
     
         if (bird != null)
         {
-            Vector3 launchDirection = (center.position - currentPosition).normalized;
+            /*Vector3 launchDirection = (center.position - currentPosition).normalized;
             float launchForce = Vector3.Distance(currentPosition, center.position) * 2f;
     
             birdTrajectory.alpha = Mathf.Atan2(launchDirection.z, launchDirection.x) * Mathf.Rad2Deg;
-            birdTrajectory.l1 = launchForce;
+            birdTrajectory.l1 = launchForce;*/
             
             //bird = null;
             //CreateBird();
+            ShootBird();
         }
     
-        currentPosition = idlePosition.position;
+        //currentPosition = idlePosition.position;
     }
 
     void ResetStrips()
@@ -136,27 +132,17 @@ public class Slingshot : MonoBehaviour
         bird = null;
         Invoke("CreateBird", 2);
     }
+
+    void ShootBird()
+    {
+        bird.GetComponent<BirdMovement>().LaunchBird(birdTrajectory.l1);
+    }
     
     public float CalculateAngle(Vector3 center, Vector3 point)
     {
-        Vector3 direction = center - point;
-        
-        Vector3 normalizedDirection = direction.normalized;
-        Vector3 normalizedReference = new Vector3(1,0,0).normalized;
-        
-        float dotProduct = Vector3.Dot(normalizedDirection, normalizedReference);
-        float crossProduct = Vector3.Cross(normalizedReference, normalizedDirection).z;
-        
-        float angleInRadians = Mathf.Acos(dotProduct);
-        
-        if (crossProduct < 0)
-        {
-            angleInRadians = -angleInRadians;
-        }
-        
-        float angleInDegrees = angleInRadians * Mathf.Rad2Deg;
-        
-        return angleInDegrees;
+        Vector3 direction = center - point;  // Note: reversed from your original
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        return angle;
     }
     
     public Vector2 ConvertToVector2(float angleInRadians, float force)
