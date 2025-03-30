@@ -24,7 +24,7 @@ public class Trajectory : MonoBehaviour
     private float _k = 10f;
     private float _f2;
     
-    float dt = 0.1f;
+    float dt = 0.01f;
     private float x;
     private float y;
     private float vx;
@@ -33,7 +33,7 @@ public class Trajectory : MonoBehaviour
     public float alpha;
     public float l1;
 
-    private List<Position> positions;
+    public List<Position> positions;
     
     public GameObject prefab;
 
@@ -41,17 +41,32 @@ public class Trajectory : MonoBehaviour
     private bool _isPressed = false;
     
     private List<GameObject> trajectoryObjets;
+    public LineRenderer lineRenderer;
  
     // Start is called before the first frame update
     void Start()
     {
         trajectoryObjets = new List<GameObject>();
         _f2 = 0.2f / _m;
-        float rad = DegreeToRadian(alpha);
+        positions = new List<Position>();
+        if (lineRenderer == null)
+        {
+            lineRenderer = GetComponent<LineRenderer>();
+            lineRenderer.sortingOrder = 1;
+            lineRenderer.material = new Material (Shader.Find ("Sprites/Default"));
+            lineRenderer.material.color = Color.red; 
+            lineRenderer.SetVertexCount (2);
+        }
+
+        if (lineRenderer != null)
+        {
+            lineRenderer.positionCount = 0;  // No points at the start
+        }
+        /*float rad = DegreeToRadian(alpha);
         positions = LancerOiseauFrottementRecurrence(rad, l1);
         Debug.Log(positions.Count);
         DrawTrajectory();
-        _timerPressed = 0;
+        _timerPressed = 0;*/
     }
 
     // Update is called once per frame
@@ -65,10 +80,27 @@ public class Trajectory : MonoBehaviour
 
     public void DrawTrajectory()
     {
-        foreach (var position in positions)
+        if (lineRenderer != null)
         {
-            GameObject obj = Instantiate(prefab, new Vector3(position.x, position.y, 0), Quaternion.identity);
-            trajectoryObjets.Add(obj);
+            lineRenderer.positionCount = positions.Count;  // Set the number of points in the LineRenderer
+
+            int i = 0;
+            foreach (var position in positions)
+            {
+                lineRenderer.SetPosition(i, new Vector3(position.x, position.y, -5));
+                i++;
+            }
+        }
+       
+    }
+
+    public void RemoveTrajectory()
+    {
+        positions.Clear();
+
+        if (lineRenderer != null)
+        {
+            lineRenderer.positionCount = 0;  // Clear the line renderer
         }
     }
 
@@ -94,7 +126,7 @@ public class Trajectory : MonoBehaviour
         float jumpImpulse = 10.0f;      // Vertical speed boost (jump strength)
         bool jumped = false;     // Duration of the jump effect (can be small)
 
-        while (positions[positions.Count-1].y > 0)
+        while (positions[positions.Count-1].y > 0f)
         {
             if (x > _timerPressed && vy <= 0 && !jumped && _isPressed)  // When the object hits the threshold and is falling
             {
@@ -107,12 +139,11 @@ public class Trajectory : MonoBehaviour
             float newY = y + vy * dt;
             x = newX;
             y = newY;
-            Debug.Log(positions.Count);
+            if (y < 0) break;
             positions.Add(new Position(newX, newY));
             vx += -_f2 * vx * dt;
             vy += -(_g + _f2 * vy) * dt;
         }
-
         return positions;
     }
 
