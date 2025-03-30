@@ -397,8 +397,19 @@ PrefabInstance:
       objectReference: {fileID: 899568218}
     - target: {fileID: 8171735651838988826, guid: 1254d82784084da4ab07bf689fec2393,
         type: 3}
+      propertyPath: birdPrefab
+      value: 
+      objectReference: {fileID: 8997559859744549077, guid: 9f82851dc90ee3b4ab093cdc4d32aef1,
+        type: 3}
+    - target: {fileID: 8171735651838988826, guid: 1254d82784084da4ab07bf689fec2393,
+        type: 3}
       propertyPath: bottomBoundary
       value: -5
+      objectReference: {fileID: 0}
+    - target: {fileID: 8171735651838988826, guid: 1254d82784084da4ab07bf689fec2393,
+        type: 3}
+      propertyPath: birdPositionOffset
+      value: -0.37
       objectReference: {fileID: 0}
     - target: {fileID: 8222985925146577492, guid: 1254d82784084da4ab07bf689fec2393,
         type: 3}

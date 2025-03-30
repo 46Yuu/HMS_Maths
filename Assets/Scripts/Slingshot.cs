@@ -12,11 +12,16 @@ public class Slingshot : MonoBehaviour
     public Vector3 currentPosition;
     public Camera cam;
 
-    public float maxLength;
+    public float maxLength = 3.0f;
+    public float bottomBoundary = -2.0f;
 
-    public float bottomBoundary;
+    private bool isMouseDown;
+    
+    public GameObject birdPrefab;
+    public float birdPositionOffset = 0.2f;
 
-    bool isMouseDown;
+    private GameObject bird;
+    private Trajectory birdTrajectory;
 
     void Start()
     {
@@ -24,6 +29,8 @@ public class Slingshot : MonoBehaviour
         lineRenderers[1].positionCount = 2;
         lineRenderers[0].SetPosition(0, stripPositions[0].position);
         lineRenderers[1].SetPosition(0, stripPositions[1].position);
+        
+        CreateBird();
     }
 
     void Update()
@@ -34,9 +41,7 @@ public class Slingshot : MonoBehaviour
             mousePosition.z = 10;
 
             currentPosition = cam.ScreenToWorldPoint(mousePosition);
-            currentPosition = center.position + Vector3.ClampMagnitude(currentPosition
-                - center.position, maxLength);
-
+            currentPosition = center.position + Vector3.ClampMagnitude(currentPosition - center.position, maxLength);
             currentPosition = ClampBoundary(currentPosition);
 
             SetStrips(currentPosition);
@@ -47,6 +52,12 @@ public class Slingshot : MonoBehaviour
         }
     }
 
+    void CreateBird()
+    {
+        bird = Instantiate(birdPrefab, stripPositions[0].position, Quaternion.identity);
+        birdTrajectory = bird.GetComponent<Trajectory>();
+    }
+
     private void OnMouseDown()
     {
         isMouseDown = true;
@@ -55,6 +66,19 @@ public class Slingshot : MonoBehaviour
     private void OnMouseUp()
     {
         isMouseDown = false;
+    
+        if (bird != null)
+        {
+            Vector3 launchDirection = (center.position - currentPosition).normalized;
+            float launchForce = Vector3.Distance(currentPosition, center.position) * 10f;
+    
+            birdTrajectory.alpha = Mathf.Atan2(launchDirection.y, launchDirection.x) * Mathf.Rad2Deg;
+            birdTrajectory.l1 = launchForce;
+    
+            bird = null;
+            CreateBird();
+        }
+    
         currentPosition = idlePosition.position;
     }
 
@@ -68,6 +92,13 @@ public class Slingshot : MonoBehaviour
     {
         lineRenderers[0].SetPosition(1, position);
         lineRenderers[1].SetPosition(1, position);
+
+        if (bird)
+        {
+            Vector3 dir = position - center.position;
+            bird.transform.position = position + dir.normalized * birdPositionOffset;
+            bird.transform.right = -dir.normalized;   
+        }
     }
 
     Vector3 ClampBoundary(Vector3 vector)

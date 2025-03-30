@@ -126,7 +126,10 @@ MonoBehaviour:
   currentPosition: {x: 0, y: 0, z: 0}
   cam: {fileID: 0}
   maxLength: 3
-  bottomBoundary: -3.5
+  bottomBoundary: -5
+  birdPrefab: {fileID: 8997559859744549077, guid: 9f82851dc90ee3b4ab093cdc4d32aef1,
+    type: 3}
+  birdPositionOffset: -0.37
 --- !u!61 &798172947257893261
 BoxCollider2D:
   m_ObjectHideFlags: 0
