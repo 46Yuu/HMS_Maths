@@ -47,8 +47,7 @@ public class Trajectory : MonoBehaviour
     
     private List<GameObject> trajectoryObjets;
     public LineRenderer lineRenderer;
- 
-    // Start is called before the first frame update
+    
     void Start()
     {
         trajectoryObjets = new List<GameObject>();
@@ -65,13 +64,8 @@ public class Trajectory : MonoBehaviour
 
         if (lineRenderer != null)
         {
-            lineRenderer.positionCount = 0;  // No points at the start
+            lineRenderer.positionCount = 0; 
         }
-        /*float rad = DegreeToRadian(alpha);
-        positions = LancerOiseauFrottementRecurrence(rad, l1);
-        Debug.Log(positions.Count);
-        DrawTrajectory();
-        _timerPressed = 0;*/
     }
 
     public void DrawTrajectory()
@@ -83,7 +77,7 @@ public class Trajectory : MonoBehaviour
             int i = 0;
             foreach (var position in positions)
             {
-                lineRenderer.SetPosition(i, new Vector3(position.x, position.y, -1));
+                lineRenderer.SetPosition(i, new Vector3(position.x, position.y, 0));
                 i++;
                 /*GameObject obj = Instantiate(prefab, new Vector3(position.x, position.y, -1), Quaternion.identity);
                 trajectoryObjets.Add(obj);*/
@@ -131,7 +125,6 @@ public class Trajectory : MonoBehaviour
             {
                 vy += jumpImpulse;
                 jumped = true;
-                Debug.Log("JUMP at " + _xPosJump);
             }
             
             // Calculate new position
@@ -146,12 +139,10 @@ public class Trajectory : MonoBehaviour
                     // Calculate exact collision point
                     float collisionTime = (0 - y) / vy;
                     float collisionX = x + vx * collisionTime;
-                    
-                    // Snap to ground at collision point
                     newX = collisionX;
                     newY = 0;
                     
-                    // Apply bounce physics
+                    // Apply bounce
                     vy = -vy * energyKept;
                     bounceCount++;
                     
@@ -161,16 +152,12 @@ public class Trajectory : MonoBehaviour
                 }
                 else
                 {
-                    // Final position at ground level
                     positions.Add(new Position(newX, 0));
                     break;
                 }
             }
-            
-            // Track if we were above ground last frame
             wasAboveGround = y > 0;
             
-            // Validate numbers
             if (float.IsNaN(newX) || float.IsInfinity(newX) || 
                 float.IsNaN(newY) || float.IsInfinity(newY))
             {
@@ -180,7 +167,6 @@ public class Trajectory : MonoBehaviour
             x = newX;
             y = newY;
             
-            // Add position if still simulating
             if (bounceCount <= maxBounces)
             {
                 positions.Add(new Position(x, y));
@@ -189,13 +175,6 @@ public class Trajectory : MonoBehaviour
             // Apply air resistance and gravity
             vx += -_f2 * vx * dt;
             vy += -(_g + _f2 * vy) * dt;
-            
-            // Early exit if we've lost all energy after last bounce
-            if (bounceCount >= maxBounces && Mathf.Abs(vy) < 0.01f)
-            {
-                positions.Add(new Position(x, 0));
-                break;
-            }
         }
         
         return positions;

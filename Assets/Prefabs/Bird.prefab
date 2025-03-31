@@ -104,7 +104,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   alpha: 0
   l1: 0
+  maxIterations: 1000
   prefab: {fileID: 2098457037102453820, guid: e55cde98f8b00ae4aaed91b891b06351, type: 3}
+  jumpImpulse: 10
+  energyKept: 0.5
   lineRenderer: {fileID: 8556334123335460941}
 --- !u!50 &-1434498361431078467
 Rigidbody2D:
@@ -285,8 +288,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isShooted: 0
-  movementSpeed: 5
+  timeBetweenPoints: 0.01
   trail: {fileID: -8426707148194340804}
+  shootPosition: {x: 0, y: 0}
+  currentScore: 0
 --- !u!96 &-8426707148194340804
 TrailRenderer:
   serializedVersion: 3
@@ -328,7 +333,7 @@ TrailRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_Time: 5
   m_PreviewTimeScale: 1
   m_Parameters:

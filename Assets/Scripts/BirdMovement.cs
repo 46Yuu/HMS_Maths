@@ -15,6 +15,8 @@ public class BirdMovement : MonoBehaviour
     private Vector3 startPosition;
     private bool hasJumped;
     public Vector2 shootPosition;
+
+    public float currentScore;
     
     void Start()
     {
@@ -24,6 +26,7 @@ public class BirdMovement : MonoBehaviour
         trail = GetComponent<TrailRenderer>();
         trail.enabled = false;
         hasJumped = false;
+        currentScore = 0;
     }
     
     void Update()
@@ -46,15 +49,13 @@ public class BirdMovement : MonoBehaviour
                 startPosition = transform.position;
                 progress = 0f;
                 
-                // Update target position for the new segment
                 targetPosition = new Vector3(
                     trajectory.positions[indexMove].x,
                     trajectory.positions[indexMove].y,
-                    -2
+                    0
                 );
             }
             
-            // Interpolate position between current and next point
             if (indexMove < trajectory.positions.Count - 1)
             {
                 transform.position = Vector3.Lerp(
@@ -67,7 +68,7 @@ public class BirdMovement : MonoBehaviour
                 Vector3 nextPos = new Vector3(
                     trajectory.positions[indexMove + 1].x,
                     trajectory.positions[indexMove + 1].y,
-                    -2
+                    0
                 );
                 Vector3 direction = nextPos - transform.position;
                 if (direction != Vector3.zero)
@@ -78,14 +79,15 @@ public class BirdMovement : MonoBehaviour
             }
             else
             {
-                // Reached the end of the trajectory
                 isShooted = false;
                 indexMove = 0;
                 trail.enabled = true;
                 trail.Clear();
+                CalculateScore();
+                Slingshot.instance.AddScore(currentScore);
+                Slingshot.instance.CreateBird();
             }
         }
-        
     }
     
     public void LaunchBird(float forceL1)
@@ -101,13 +103,35 @@ public class BirdMovement : MonoBehaviour
             startPosition = new Vector3(
                 trajectory.positions[0].x,
                 trajectory.positions[0].y,
-                -2
+                0
             );
             targetPosition = new Vector3(
                 trajectory.positions[1].x,
                 trajectory.positions[1].y,
-                -2
+                0
             );
+        }
+    }
+
+
+    private void CalculateScore()
+    {
+        float xFinal = trajectory.positions[trajectory.positions.Count-1].x;
+        if (xFinal >= 26.22f && xFinal <= 27.88f)
+        {
+            currentScore = 50f;
+        }
+        else if (xFinal >= 24.54f && xFinal <= 29.56f)
+        {
+            currentScore = 25f;
+        }
+        else if (xFinal >= 21.45f && xFinal <= 32.64f)
+        {
+            currentScore = 10f;
+        }
+        else
+        {
+            currentScore = 0f;
         }
     }
 }
