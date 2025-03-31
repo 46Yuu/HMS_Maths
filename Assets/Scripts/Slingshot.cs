@@ -54,15 +54,16 @@ public class Slingshot : MonoBehaviour
                 birdTrajectory.alpha = angle;
                 birdTrajectory.l1 = launchForce;
                 
-                trajectory.RemoveTrajectory();
+                //trajectory.RemoveTrajectory();
                 float rad = trajectory.DegreeToRadian(birdTrajectory.alpha);
-                trajectory.positions = trajectory.LancerOiseauFrottementRecurrence(rad, birdTrajectory.l1);
+                trajectory.positions = trajectory.LancerOiseauFrottementRecurrence(rad, birdTrajectory.l1,
+                    new Vector2(currentPosition.x, currentPosition.y));
                 trajectory.DrawTrajectory();
             }
         }
         else
         {
-            if(!bird.GetComponent<BirdMovement>().isShooted)
+            if(bird != null && !bird.GetComponent<BirdMovement>().isShooted)
                 ResetStrips();
         }
     }
@@ -136,6 +137,7 @@ public class Slingshot : MonoBehaviour
 
     void ShootBird()
     {
+        bird.GetComponent<BirdMovement>().shootPosition = new Vector2(currentPosition.x, currentPosition.y);
         bird.GetComponent<BirdMovement>().LaunchBird(birdTrajectory.l1);
     }
     

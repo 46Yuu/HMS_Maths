@@ -13,6 +13,8 @@ public class BirdMovement : MonoBehaviour
     private float progress;
     private float startTime;
     private Vector3 startPosition;
+    private bool hasJumped;
+    public Vector2 shootPosition;
     
     void Start()
     {
@@ -21,12 +23,18 @@ public class BirdMovement : MonoBehaviour
         trajectory = GetComponent<Trajectory>();
         trail = GetComponent<TrailRenderer>();
         trail.enabled = false;
+        hasJumped = false;
     }
     
     void Update()
     {
         if (isShooted && trajectory.positions.Count > 0)
         {
+            if (Input.GetMouseButtonDown(0) && !hasJumped)
+            {
+                trajectory.Pressed(shootPosition, transform.position.x);
+                hasJumped = true;
+            }
             float elapsed = Time.time - startTime;
             progress = elapsed / timeBetweenPoints;
             
@@ -77,6 +85,7 @@ public class BirdMovement : MonoBehaviour
                 trail.Clear();
             }
         }
+        
     }
     
     public void LaunchBird(float forceL1)
@@ -86,7 +95,6 @@ public class BirdMovement : MonoBehaviour
             trail.enabled = true;
             trail.Clear();
             isShooted = true;
-            
             indexMove = 0;
             progress = 0f;
             startTime = Time.time;

@@ -24,7 +24,7 @@ public class Trajectory : MonoBehaviour
     private float _k = 10f;
     private float _f2;
     
-    float dt = 0.1f;
+    float dt = 0.01f;
     private float x;
     private float y;
     private float vx;
@@ -32,13 +32,18 @@ public class Trajectory : MonoBehaviour
 
     public float alpha;
     public float l1;
+    public int maxIterations = 1000;
 
     public List<Position> positions;
     
     public GameObject prefab;
 
-    private float _timerPressed;
+    private float _xPosJump;
     private bool _isPressed = false;
+    public float jumpImpulse = 5.0f;
+    
+    public const int maxBounces = 2;
+    public float energyKept = 0.5f; 
     
     private List<GameObject> trajectoryObjets;
     public LineRenderer lineRenderer;
@@ -49,6 +54,7 @@ public class Trajectory : MonoBehaviour
         trajectoryObjets = new List<GameObject>();
         _f2 = 0.2f / _m;
         positions = new List<Position>();
+        _xPosJump = 0;
         if (lineRenderer == null)
         {
             lineRenderer = GetComponent<LineRenderer>();
@@ -68,15 +74,6 @@ public class Trajectory : MonoBehaviour
         _timerPressed = 0;*/
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        if (!_isPressed)
-        {
-            _timerPressed += Time.deltaTime;
-        }
-    }
-
     public void DrawTrajectory()
     {
         if (lineRenderer != null)
@@ -88,8 +85,8 @@ public class Trajectory : MonoBehaviour
             {
                 lineRenderer.SetPosition(i, new Vector3(position.x, position.y, -1));
                 i++;
-                GameObject obj = Instantiate(prefab, new Vector3(position.x, position.y, -1), Quaternion.identity);
-                trajectoryObjets.Add(obj);
+                /*GameObject obj = Instantiate(prefab, new Vector3(position.x, position.y, -1), Quaternion.identity);
+                trajectoryObjets.Add(obj);*/
             }
         }
        
@@ -113,59 +110,104 @@ public class Trajectory : MonoBehaviour
         return l1 * Mathf.Sqrt(_k / _m) * Mathf.Sqrt(1 - Mathf.Pow(_m * _g * Mathf.Sin(alpha) / (_k * l1), 2f));
     }
 
-    public List<Position> LancerOiseauFrottementRecurrence(float _alpha, float _l1)
+    public List<Position> LancerOiseauFrottementRecurrence(float _alpha, float _l1, Vector2 startPos)
     {
         List<Position> positions = new List<Position>();
         float v0 = VitesseInitiale(_alpha, _l1);
-        x = transform.position.x;
-        y = transform.position.y;
+        x = startPos.x;
+        y = startPos.y;
         vx = v0 * Mathf.Cos(_alpha);
         vy = v0 * Mathf.Sin(_alpha);
         positions.Add(new Position(x,y));
         
-        float jumpImpulse = 10.0f;      // Vertical speed boost (jump strength)
-        bool jumped = false;     // Duration of the jump effect (can be small)
-        int maxIterations = 1000; // Prevent infinite loops
+        bool jumped = false;
+        int bounceCount = 0;
+        bool wasAboveGround = true;
 
-        while (positions.Count < maxIterations && positions[positions.Count-1].y > 0f)
+        while (positions.Count < maxIterations && bounceCount <= maxBounces)
         {
-            if (x > _timerPressed && vy <= 0 && !jumped && _isPressed)  // When the object hits the threshold and is falling
+            // Check for jump input
+            if (x > _xPosJump && !jumped && _isPressed && bounceCount < 1)
             {
-                vy += jumpImpulse; // Apply a vertical "jump" force
+                vy += jumpImpulse;
                 jumped = true;
-                Debug.Log("JUMP at " + _timerPressed);
+                Debug.Log("JUMP at " + _xPosJump);
             }
             
+            // Calculate new position
             float newX = x + vx * dt;
             float newY = y + vy * dt;
             
-            // Validate numbers (crucial!)
+            // Check for ground collision
+            if (wasAboveGround && newY <= 0)
+            {
+                if (bounceCount < maxBounces)
+                {
+                    // Calculate exact collision point
+                    float collisionTime = (0 - y) / vy;
+                    float collisionX = x + vx * collisionTime;
+                    
+                    // Snap to ground at collision point
+                    newX = collisionX;
+                    newY = 0;
+                    
+                    // Apply bounce physics
+                    vy = -vy * energyKept;
+                    bounceCount++;
+                    
+                    // Recalculate position after bounce
+                    newX = newX + vx * (dt - collisionTime);
+                    newY = newY + vy * (dt - collisionTime);
+                }
+                else
+                {
+                    // Final position at ground level
+                    positions.Add(new Position(newX, 0));
+                    break;
+                }
+            }
+            
+            // Track if we were above ground last frame
+            wasAboveGround = y > 0;
+            
+            // Validate numbers
             if (float.IsNaN(newX) || float.IsInfinity(newX) || 
                 float.IsNaN(newY) || float.IsInfinity(newY))
             {
                 break;
             }
+            
             x = newX;
             y = newY;
             
-            if (y < 0) break;
-            positions.Add(new Position(newX, newY));
+            // Add position if still simulating
+            if (bounceCount <= maxBounces)
+            {
+                positions.Add(new Position(x, y));
+            }
+            
+            // Apply air resistance and gravity
             vx += -_f2 * vx * dt;
             vy += -(_g + _f2 * vy) * dt;
+            
+            // Early exit if we've lost all energy after last bounce
+            if (bounceCount >= maxBounces && Mathf.Abs(vy) < 0.01f)
+            {
+                positions.Add(new Position(x, 0));
+                break;
+            }
         }
+        
         return positions;
     }
 
-    public void Pressed()
+    public void Pressed(Vector2 startPos, float xPos)
     {
         _isPressed = true;
         positions.Clear();
-        foreach (var go in trajectoryObjets)
-        {
-            Destroy(go);
-        }
         float rad = DegreeToRadian(alpha);
-        positions = LancerOiseauFrottementRecurrence(rad, l1);
+        _xPosJump = xPos;
+        positions = LancerOiseauFrottementRecurrence(rad, l1, startPos);
         DrawTrajectory();
     }
 }
