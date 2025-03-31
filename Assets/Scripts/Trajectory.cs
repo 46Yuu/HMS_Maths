@@ -24,7 +24,7 @@ public class Trajectory : MonoBehaviour
     private float _k = 10f;
     private float _f2;
     
-    float dt = 0.01f;
+    float dt = 0.1f;
     private float x;
     private float y;
     private float vx;
@@ -55,7 +55,6 @@ public class Trajectory : MonoBehaviour
             lineRenderer.sortingOrder = 1;
             lineRenderer.material = new Material (Shader.Find ("Sprites/Default"));
             lineRenderer.material.color = Color.red; 
-            lineRenderer.SetVertexCount (2);
         }
 
         if (lineRenderer != null)
@@ -82,13 +81,15 @@ public class Trajectory : MonoBehaviour
     {
         if (lineRenderer != null)
         {
-            lineRenderer.positionCount = positions.Count;  // Set the number of points in the LineRenderer
+            lineRenderer.positionCount = positions.Count;  
 
             int i = 0;
             foreach (var position in positions)
             {
                 lineRenderer.SetPosition(i, new Vector3(position.x, position.y, -1));
                 i++;
+                GameObject obj = Instantiate(prefab, new Vector3(position.x, position.y, -1), Quaternion.identity);
+                trajectoryObjets.Add(obj);
             }
         }
        
@@ -97,10 +98,9 @@ public class Trajectory : MonoBehaviour
     public void RemoveTrajectory()
     {
         positions.Clear();
-
-        if (lineRenderer != null)
+        foreach (GameObject obj in trajectoryObjets)
         {
-            lineRenderer.positionCount = 0;  // Clear the line renderer
+            Destroy(obj);
         }
     }
 

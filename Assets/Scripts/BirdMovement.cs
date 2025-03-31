@@ -5,11 +5,14 @@ using UnityEngine;
 public class BirdMovement : MonoBehaviour
 {
     public bool isShooted;
-    public float movementSpeed;
+    public float timeBetweenPoints = 0.01f;
     private int indexMove;
     private Trajectory trajectory;
     private Vector3 targetPosition;
     public TrailRenderer trail;
+    private float progress;
+    private float startTime;
+    private Vector3 startPosition;
     
     void Start()
     {
@@ -24,20 +27,35 @@ public class BirdMovement : MonoBehaviour
     {
         if (isShooted && trajectory.positions.Count > 0)
         {
-            targetPosition = new Vector3(
-                trajectory.positions[indexMove].x,
-                trajectory.positions[indexMove].y,
-                -2
-            );
+            float elapsed = Time.time - startTime;
+            progress = elapsed / timeBetweenPoints;
             
-            transform.position = Vector3.MoveTowards(
-                transform.position,
-                targetPosition,
-                movementSpeed * Time.deltaTime
-            );
+            // Move to next point if time progress for current is over
+            if (progress >= 1f && indexMove < trajectory.positions.Count - 1)
+            {
+                indexMove++;
+                startTime = Time.time;
+                startPosition = transform.position;
+                progress = 0f;
+                
+                // Update target position for the new segment
+                targetPosition = new Vector3(
+                    trajectory.positions[indexMove].x,
+                    trajectory.positions[indexMove].y,
+                    -2
+                );
+            }
             
+            // Interpolate position between current and next point
             if (indexMove < trajectory.positions.Count - 1)
             {
+                transform.position = Vector3.Lerp(
+                    startPosition,
+                    targetPosition,
+                    progress
+                );
+                
+                // Calculate rotation
                 Vector3 nextPos = new Vector3(
                     trajectory.positions[indexMove + 1].x,
                     trajectory.positions[indexMove + 1].y,
@@ -50,18 +68,13 @@ public class BirdMovement : MonoBehaviour
                     transform.rotation = Quaternion.AngleAxis(angle, Vector3.forward);
                 }
             }
-            
-            if (Vector3.Distance(transform.position, targetPosition) < 0.05f)
+            else
             {
-                indexMove++;
-                
-                if (indexMove >= trajectory.positions.Count-1)
-                {
-                    isShooted = false;
-                    indexMove = 0;
-                    trail.enabled = true;
-                    trail.Clear();
-                }
+                // Reached the end of the trajectory
+                isShooted = false;
+                indexMove = 0;
+                trail.enabled = true;
+                trail.Clear();
             }
         }
     }
@@ -73,12 +86,19 @@ public class BirdMovement : MonoBehaviour
             trail.enabled = true;
             trail.Clear();
             isShooted = true;
+            
             indexMove = 0;
-            movementSpeed = forceL1*2.5f;
-            transform.position = new Vector3(
+            progress = 0f;
+            startTime = Time.time;
+            startPosition = new Vector3(
                 trajectory.positions[0].x,
                 trajectory.positions[0].y,
-                transform.position.z
+                -2
+            );
+            targetPosition = new Vector3(
+                trajectory.positions[1].x,
+                trajectory.positions[1].y,
+                -2
             );
         }
     }

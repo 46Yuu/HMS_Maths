@@ -54,6 +54,7 @@ public class Slingshot : MonoBehaviour
                 birdTrajectory.alpha = angle;
                 birdTrajectory.l1 = launchForce;
                 
+                trajectory.RemoveTrajectory();
                 float rad = trajectory.DegreeToRadian(birdTrajectory.alpha);
                 trajectory.positions = trajectory.LancerOiseauFrottementRecurrence(rad, birdTrajectory.l1);
                 trajectory.DrawTrajectory();
