@@ -214,7 +214,7 @@ public class Trajectory : MonoBehaviour
         float rad = DegreeToRadian(alpha);
         // On définit la position X au moment du double saut
         _xPosJump = xPos;
-        // On remet à jour la liste des positions que l'oiseau va parcourir en changeant uniquement le point d'origine
+        // On remet à jour la liste des positions que l'oiseau va parcourir
         positions = LancerOiseauFrottementRecurrence(rad, l1, startPos);
         DrawTrajectory();
     }
