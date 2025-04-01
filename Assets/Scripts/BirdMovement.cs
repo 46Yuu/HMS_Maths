@@ -31,24 +31,28 @@ public class BirdMovement : MonoBehaviour
     
     void Update()
     {
+        // Vérifie si l'oiseau a été lancé et s'il y a une trajectoire disponible
         if (isShooted && trajectory.positions.Count > 0)
         {
+            // Permet un saut supplémentaire si le joueur appuie sur la souris
             if (Input.GetMouseButtonDown(0) && !hasJumped)
             {
                 trajectory.Pressed(shootPosition, transform.position.x);
                 hasJumped = true;
             }
+            // Calcul du temps écoulé depuis le dernier mouvement
             float elapsed = Time.time - startTime;
             progress = elapsed / timeBetweenPoints;
             
-            // Move to next point if time progress for current is over
+            // Si l'oiseau doit passer au point suivant sur la trajectoire après 1 seconde de temps écoulé
             if (progress >= 1f && indexMove < trajectory.positions.Count - 1)
             {
-                indexMove++;
-                startTime = Time.time;
-                startPosition = transform.position;
-                progress = 0f;
+                indexMove++; // Avancer d'un point
+                startTime = Time.time; // Remettre le temps à 0
+                startPosition = transform.position; // Sauvegarde de la position actuelle
+                progress = 0f; // Réinitialisation de la progression
                 
+                // Mise à jour de la nouvelle position cible
                 targetPosition = new Vector3(
                     trajectory.positions[indexMove].x,
                     trajectory.positions[indexMove].y,
@@ -56,29 +60,34 @@ public class BirdMovement : MonoBehaviour
                 );
             }
             
+            // Si l'oiseau est toujours en mouvement
             if (indexMove < trajectory.positions.Count - 1)
             {
+                // Déplacement progressif de l'oiseau entre les points avec interpolation linéaire
                 transform.position = Vector3.Lerp(
                     startPosition,
                     targetPosition,
                     progress
                 );
                 
-                // Calculate rotation
+                // Rotation de l'oiseau en fonction de la direction du mouvement
                 Vector3 nextPos = new Vector3(
                     trajectory.positions[indexMove + 1].x,
                     trajectory.positions[indexMove + 1].y,
                     0
                 );
                 Vector3 direction = nextPos - transform.position;
+                // Si la direction est valide, on applique une rotation
                 if (direction != Vector3.zero)
                 {
                     float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
                     transform.rotation = Quaternion.AngleAxis(angle, Vector3.forward);
                 }
             }
+            // Dans le cas contraire, l'oiseau a atterri
             else
             {
+                // Fin du mouvement
                 isShooted = false;
                 indexMove = 0;
                 trail.enabled = true;
@@ -90,8 +99,10 @@ public class BirdMovement : MonoBehaviour
         }
     }
     
+    // Fonction pour lancer l'oiseau avec une force donnée
     public void LaunchBird(float forceL1)
     {
+        // Vérifie si la trajectoire contient au moins un point
         if (trajectory.positions.Count > 0)
         {
             trail.enabled = true;
@@ -100,6 +111,8 @@ public class BirdMovement : MonoBehaviour
             indexMove = 0;
             progress = 0f;
             startTime = Time.time;
+
+            // Définit la position d'origine
             startPosition = new Vector3(
                 trajectory.positions[0].x,
                 trajectory.positions[0].y,
@@ -113,7 +126,7 @@ public class BirdMovement : MonoBehaviour
         }
     }
 
-
+    // Fonction pour calculer le score en fonction de la position finale
     private void CalculateScore()
     {
         float xFinal = trajectory.positions[trajectory.positions.Count-1].x;
