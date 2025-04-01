@@ -65,28 +65,43 @@ public class Slingshot : MonoBehaviour
         CreateBird();
     }
 
+    //  Permet de lancer l'oiseau à l'aide de la souris
     void Update()
     {
+        // Si le joueur maintient le clic de souris enfoncé
         if (isMouseDown)
         {
+            // Convertit la position de la souris en coordonnées du monde 2D
             Vector3 mousePosition = Input.mousePosition;
             mousePosition.z = 10;
 
             currentPosition = cam.ScreenToWorldPoint(mousePosition);
-            currentPosition = center.position + Vector3.ClampMagnitude(currentPosition - center.position, maxLength);
+
+            // Contraint la distance max d'étirement de l'élastique
+            currentPosition = center.position + Vector3.ClampMagnitude(currentPosition - center.position, maxLength); // Le clamp magnitude garde la direction mais applique une distance max
             currentPosition = ClampBoundary(currentPosition);
             SetStrips(currentPosition);
+
+            // On met à jour la trajectoire de l'oiseau
             if (bird != null)
             {
                 Trajectory trajectory = bird.GetComponent<Trajectory>();
                 bird.GetComponent<Rigidbody2D>().isKinematic = true;
+
+                // On applique une force de lancer par rapport à la distance entre le centre du lance oiseau et jusqu'ou on tire l'élastique
                 float launchForce = Vector3.Distance(currentPosition, center.position) * 2f;
+                // On calcule l'angle appliqué
                 float angle = CalculateAngle(center.position, currentPosition);
+
+                // On donne la force et l'angle pour la trajectoire de l'oiseau
                 birdTrajectory.alpha = angle;
                 birdTrajectory.l1 = launchForce;
                 
                 //trajectory.RemoveTrajectory();
+
+                // On recupere l'angle en radiant
                 float rad = trajectory.DegreeToRadian(birdTrajectory.alpha);
+                // Appel de la fonction lancer oiseau frottement recurrence avec l'angle en radiant, la force de lancer et la position d'origine
                 trajectory.positions = trajectory.LancerOiseauFrottementRecurrence(rad, birdTrajectory.l1,
                     new Vector2(currentPosition.x, currentPosition.y));
                 trajectory.DrawTrajectory();
@@ -179,6 +194,7 @@ public class Slingshot : MonoBehaviour
         bird.GetComponent<BirdMovement>().LaunchBird(birdTrajectory.l1);
     }
     
+    // Calcul de l'angle a l'aide de arc tangente
     public float CalculateAngle(Vector3 center, Vector3 point)
     {
         Vector3 direction = center - point;
@@ -186,6 +202,7 @@ public class Slingshot : MonoBehaviour
         return angle;
     }
     
+    // Conversion d'angle en vecteur directionnel avec cosinus et sinus (comme sur un cercle) et renvoie de la direction multiplié par la force
     public Vector2 ConvertToVector2(float angleInRadians, float force)
     {
         float xDirection = Mathf.Cos(angleInRadians);
